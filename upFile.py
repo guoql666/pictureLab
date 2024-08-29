@@ -38,12 +38,15 @@ async def UploadFile(payload,folder : Union[str, None]) -> bool:
 async def UploadFileFromUrl(url: str, folder: Union[str, None]) -> Tuple[bool, Union[None, str]]:
     if folder is None:
         folder = "base"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.content.read()
+    async with aiohttp.request("GET",url) as res:
+        resp_code = res.status
+        data = await res.read()
+    # 下载是否成功
+    if resp_code != 200:
+        return False,None
     if len(data) == 0:
         return False,None
     filename = hashlib.md5(data).hexdigest()
-    with open(upload_url + f"{filename}-{folder}") as file:
+    with open(upload_url + f"{filename}-{folder}","wb") as file:
         file.write(data)
     return True,filename
