@@ -12,6 +12,8 @@
 
 ​	需要欲下载文件的md5值，可选参数folder
 
+​	/PicDownload?token=xxx&file=yyy
+
 ​	
 
 ### 上传
@@ -30,6 +32,7 @@
 ​	并通过post方式传递form表单。
 
 ​	图库会读取payload字段的内容并写入文件
+
 
 
 
