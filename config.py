@@ -1,7 +1,7 @@
 import os
 
 
-token_list = ["sakibot_secure"]
+token_list = []
 
 
 base_url = os.getcwd()
