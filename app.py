@@ -19,6 +19,9 @@ async def PicUpload(request):
     except AssertionError as e:
         error_result = {'error':str(e)}
         return web.json_response(error_result,status=404)
+    except KeyError as e:
+        error_result = {'error':f"not found {str(e)}"}
+        return web.json_response(error_result,status=404)
     # 分段获取post数据
     field = await post_data.next()
     
@@ -72,14 +75,14 @@ async def PicUploadUrl(request):
         error_result = {'error':'token expired'}
         return web.json_response(error_result,status=403)
     
-    if url:=data.get('url') is None:
+    if (url:=data.get('url')) is None:
         error_result = {'error':'url required'}
         return web.json_response(error_result,status=404)
     folder = data.get('path')
     # 如果result为真，那么会返回filename,否则返回None
     result,filename = await UploadFileFromUrl(url,folder)
     if result:
-        web.json_response({'message':'upload success','info':{'md5':str(filename)}},status=200)
+        return web.json_response({'message':'upload success','info':{'md5':str(filename)}},status=200)
     else:
         error_result = {'error':'file upload faild'}
         return web.json_response(error_result,status=404)
