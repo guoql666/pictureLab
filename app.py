@@ -11,7 +11,7 @@ route = web.RouteTableDef()
 async def PicUpload(request):
     get_data = dict(request.query)
     # 校验是否存在token且是否合法
-    if check_token(get_data.get('token')) is False:
+    if check_token((token:=get_data.get('token'))) is False:
         error_result = {'error':'token expired'}
         return web.json_response(error_result,status=403)
     try:
@@ -36,7 +36,7 @@ async def PicUpload(request):
     
     folder = get_data.get('path')
     # 如果result为真，那么会返回filename,否则返回None
-    result,filename = await UploadFile(field,folder)
+    result,filename = await UploadFile(field, folder, token)
     if result:
         web.json_response({'message':'upload success','info':{'md5':str(filename)}},status=200)
     else:
@@ -49,7 +49,7 @@ async def PicUpload(request):
 async def Picture(request):
     data = dict(request.query)
     # 校验是否存在token且是否合法
-    if check_token(data.get('token')) is False:
+    if check_token((token:=data.get('token'))) is False:
         error_result = {'error':'token expired'}
         return web.json_response(error_result,status=403)
     md5 = data.get('file')
@@ -59,7 +59,7 @@ async def Picture(request):
         error_result = {'error':'filename valid'}
         return web.json_response(error_result,status=404)
     # 获取图片
-    pic_file = getPicByMD5(md5,folder)
+    pic_file = getPicByMD5(md5,folder,token)
     # 图片无法读取或不存在
     if pic_file is False:
         error_result = {'error':'file not exist'}
@@ -71,7 +71,7 @@ async def Picture(request):
 @route.get("/PicUploadFromUrl")
 async def PicUploadUrl(request):
     data = dict(request.query)
-    if check_token(data.get('token')) is False:
+    if check_token((token:=data.get('token'))) is False:
         error_result = {'error':'token expired'}
         return web.json_response(error_result,status=403)
     
@@ -80,15 +80,50 @@ async def PicUploadUrl(request):
         return web.json_response(error_result,status=404)
     folder = data.get('path')
     # 如果result为真，那么会返回filename,否则返回None
-    result,filename = await UploadFileFromUrl(url,folder)
+    result,filename = await UploadFileFromUrl(url,folder,token)
     if result:
-        return web.json_response({'message':'upload success','info':{'md5':str(filename)}},status=200)
+        return web.json_response({'message':'upload success',
+                                  'info':{
+                                      'md5':str(filename)
+                                      }
+                                  },status=200)
     else:
         error_result = {'error':'file upload faild'}
         return web.json_response(error_result,status=404)
 
 
+@route.get("/PicList")
+async def PicList(request):
+    data = dict(request.query)
+    if check_token((token:=data.get('token'))) is False:
+        error_result = {'error':'token expired'}
+        return web.json_response(error_result,status=403)
+    
+    folder = data.get('path')
+    file_dict = getListPic(folder,token)
+    return web.json_response(file_dict, status=200)
+
+
+@route.get("/PicExist")
+async def PicExist(request):
+    data = dict(request.query)
+    if check_token((token:=data.get('token'))) is False:
+        error_result = {'error':'token expired'}
+        return web.json_response(error_result,status=403)
+
+    if (target_md5:=data.get('md5')) is None:
+        error_result = {'error':'md5 required'}
+        return web.json_response(error_result,status=404)
+
+    folder = data.get('path')
+    result = IsPicExist(target_md5, folder, token)
+    if not result:
+        return web.json_response({'error':'no such file'},status=404)
+    return web.json_response({'message':'file exist'},status=200) 
+
+
 def main():
+    folder_init()
     app = web.Application()
     app.add_routes(route)
     web.run_app(app, host="127.0.0.1", port=5000)
