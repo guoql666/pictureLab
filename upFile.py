@@ -46,10 +46,8 @@ async def UploadFileFromUrl(url: str, folder: Union[str, None], token: str) -> T
         data = await res.read()
     # 下载是否成功
     if resp_code != 200:
-        print("err1", str(resp_code), len(data))
         return False,None
     if len(data) == 0:
-        print("err2")
         return False,None
     filename = hashlib.md5(data).hexdigest()
     with open(upload_url + f"/{token}/" + f"{filename}-{folder}","wb") as file:
