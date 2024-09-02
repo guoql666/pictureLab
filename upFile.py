@@ -3,6 +3,8 @@ from common import *
 import hashlib
 from time import time
 import aiohttp
+from urllib.parse import unquote
+
 
 async def UploadFile(payload,folder : Union[str, None], token : str) -> bool:
     if folder is None:
@@ -38,13 +40,16 @@ async def UploadFile(payload,folder : Union[str, None], token : str) -> bool:
 async def UploadFileFromUrl(url: str, folder: Union[str, None], token: str) -> Tuple[bool, Union[None, str]]:
     if folder is None:
         folder = "base"
+    url = unquote(url)
     async with aiohttp.request("GET",url) as res:
         resp_code = res.status
         data = await res.read()
     # 下载是否成功
     if resp_code != 200:
+        print("err1", str(resp_code), len(data))
         return False,None
     if len(data) == 0:
+        print("err2")
         return False,None
     filename = hashlib.md5(data).hexdigest()
     with open(upload_url + f"/{token}/" + f"{filename}-{folder}","wb") as file:
